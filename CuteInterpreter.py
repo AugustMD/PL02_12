@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+import sys, time
+
 from string import letters, digits
 
 class CuteType:
@@ -321,7 +323,12 @@ class CuteInterpreter(object):
     def run_arith(self, arith_node):
         rhs1 = arith_node.next
         rhs2 = rhs1.next if rhs1.next is not None else None
-
+        if rhs1.type is TokenType.ID:
+            if self.lookupTable(rhs1.value) is not None:
+                rhs1 = self.lookupTable(rhs1.value)
+        if rhs2.type is TokenType.ID:
+            if self.lookupTable(rhs2.value) is not None:
+                rhs2 = self.lookupTable(rhs2.value)
         rhs1 = self.run_expr(rhs1)
         rhs2 = self.run_expr(rhs2)
         if rhs1 is None or rhs2 is None:
@@ -507,31 +514,35 @@ class CuteInterpreter(object):
             return None
 
     def lookupTable(self, id):
-        """
-        :type id: String
-        :return:
-        """
-        temp = table[id]
-        if temp is not None:
-            if temp.type is TokenType.INT:
-                return temp
-            elif temp.type is TokenType.QUOTE:
-                return temp
-            elif temp.type is TokenType.LIST:
-                return temp
-        return None
+            """
+            :type id: String
+            :return:
+            """
+            temp = table[id]
+            if temp is not None:
+                if temp.type is TokenType.INT:
+                    return temp
+                elif temp.type is TokenType.QUOTE:
+                    return temp
+                elif temp.type is TokenType.LIST:
+                    return temp
+            return None
 
     def run_expr(self, root_node):
         """
         :type root_node: Node
         """
         if root_node is None:
-            if(self.lookupTable(root_node.value) is not None):
+            return None
+
+        if root_node.type is TokenType.ID:
+            if (root_node.value in table) is False:
+                sys.stderr.write(root_node.value + "... Undefined;\ncannot reference an identifier before its definition\n")
+                return
+            if self.lookupTable(root_node.value) is not None:
                 return self.lookupTable(root_node.value)
             else:
                 return root_node
-        if root_node.type is TokenType.ID:
-            return root_node
         elif root_node.type is TokenType.INT:
             return root_node
         elif root_node.type is TokenType.TRUE:
@@ -650,9 +661,10 @@ def Test_method(input):
 
 def Test_All():
     x = True
-    while (x):
+    while(x):
+        time.sleep(0.5)
         a = raw_input("> ")
-        if a == "exit()":
-            x = False;
+        if(a == "( exit )"):
+            x = False
         Test_method(a)
 Test_All()
